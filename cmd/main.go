@@ -10,7 +10,7 @@ func worker(id int, jobs <-chan int, results chan<- int) {
 		fmt.Printf("El worker %d inicio la tarea %d\n", id, job)
 		time.Sleep(300 * time.Millisecond)
 
-		result := job
+		result := job * 2
 
 		results <- result
 
