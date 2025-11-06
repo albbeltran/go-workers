@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
-func worker(id int, jobs <-chan int, results chan<- int) {
+func worker(id int, jobs <-chan int, results chan<- int, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	for job := range jobs {
 		fmt.Printf("El worker %d inicio la tarea %d\n", id, job)
 		time.Sleep(300 * time.Millisecond)
@@ -25,8 +28,11 @@ func main() {
 	jobs := make(chan int, numJobs)
 	results := make(chan int, numJobs)
 
+	var wg sync.WaitGroup
+
 	for w := 1; w <= numWorkers; w++ {
-		go worker(w, jobs, results)
+		wg.Add(1)
+		go worker(w, jobs, results, &wg)
 	}
 
 	go func() {
@@ -34,6 +40,11 @@ func main() {
 			jobs <- j
 		}
 		close(jobs)
+	}()
+
+	go func() {
+		wg.Wait()
+		close(results)
 	}()
 
 	for r := 1; r <= numJobs; r++ {
